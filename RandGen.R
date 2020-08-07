@@ -24,6 +24,16 @@ createVector <- function(){
   return(tempVec)
 }
 
+#Returns vector of random chars chosen from allowable char set
+createColumn <- function(){
+  tempVec <- vector(mode= "list", length = "2")
+  for(i in 0:length(tempVec) + 1){
+    tempVec[i] <- randomChar()
+  }
+  
+  return(paste(tempVec, collapse = ""))
+}
+
 #Returns a newly generated vector, in essence shuffling all values
 shuffleAll <- function(){
   playerVector <- createVector()
@@ -46,9 +56,5 @@ shuffleOneSelect <- function(oldVector, marker){
 }
 
 playerVector <- createVector()
-playColOne <- paste("", playerVector[1:2])
-playColTwo <- paste("", playerVector[3:4])
-playColThree <- paste("", playerVector[5:6])
-playColFour <- paste("", playerVector[7:8])
 
 finalVector <- createVector()

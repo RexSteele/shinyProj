@@ -33,10 +33,18 @@ ui <- fluidPage(
       # Output:
       verbatimTextOutput("Yours"),
       fluidRow(
-        column(3, title = "workingSet1", paste(getPlayer()[1:4], collapse = "")),
-        column(3, title = "workingSet2", paste(getPlayer()[5:8], collapse = "")),
-        column(3, title = "workingSet3", paste(getPlayer()[9:12], collapse = "")),
-        column(3, title = "workingSet4", paste(getPlayer()[13:16], collapse = ""))
+        column(2,
+            textOutput("g1")
+            ),
+        column(2,
+            textOutput("g2")
+        ),
+        column(2,
+            textOutput("g3")
+        ),
+        column(2,
+            textOutput("g4")
+        ),
       ),
       
       #Cryptex Image
@@ -49,10 +57,27 @@ ui <- fluidPage(
 # Define server
 server <- function(input, output) {
   
-  # Observe click of shuffle all
-  playerVector <- eventReactive(input$shuffleAll, {
-    shuffleAll()
-    output$workingSet1 <- verbatimTextOutput({paste(getPlayer[1:4], collapse = "")})
+  goal1 <- createColumn()
+  goal2 <- createColumn()
+  goal3 <- createColumn()
+  goal4 <- createColumn()
+  
+  play1 <- createColumn()
+  play2 <- createColumn()
+  play3 <- createColumn()
+  play4 <- createColumn()
+  
+  output$g1 <- renderText({
+    createColumn()
+  })
+  output$g2 <- renderText({
+    createColumn()
+  })
+  output$g3 <- renderText({
+    createColumn()
+  })
+  output$g4 <- renderText({
+    createColumn()
   })
 }
 
