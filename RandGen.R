@@ -27,7 +27,7 @@ createVector <- function(){
 #Returns vector of random chars chosen from allowable char set
 createColumn <- function(){
   tempVec <- vector(mode= "list", length = "2")
-  for(i in 0:length(tempVec) + 1){
+  for(i in 0:length(tempVec)){
     tempVec[i] <- randomChar()
   }
   
