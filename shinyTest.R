@@ -1,130 +1,292 @@
 library(shiny)
 source("RandGen.R")
 
-# Define UI for dataset viewer app ----
-ui <- fluidPage(
+#Standard string for revert event
+oldPlay <- ""
 
+#Import data from RVD-DNA.txt as data frame
+bondTab <- read.table(file = "RVD-DNA.txt", sep = "\t", header = TRUE, na.strings = '')
+rownames(bondTab) <- bondTab[,1]
+bondTab$X <- NULL
+
+#df for player choices made
+choices <- data.frame(matrix(ncol = 8, nrow = 1))
+colnames(choices) <- c("p1","p2","p3","p4","p5","p6","p7","p8")
+
+
+# Define UI for app ----
+ui <- fluidPage(
+  
   # App title ----
   titlePanel("Bio - Cryptex"),
-
+  
   # Sidebar layout with a input and output definitions ----
   sidebarLayout(
-
+    
     # Sidebar panel for inputs ----
     sidebarPanel(
-
+      
       # Input: Button to shuffle all values
       actionButton(inputId = "shuffleAll",
-                    label = "Shuffle All"),
-
+                   label = "Shuffle All"),
+      
+      # Input: Button to shuffle one random letter in random column
+      actionButton(inputId = "mutation",
+                   label = "Mutate"),
+      
+      # Input: Button to shuffle a random set of contiguous columns
+      actionButton(inputId = "recomb",
+                   label = "Recombination"),
+      
       # Input: Select entry for column to shuffle
       selectInput(inputId = "shuffleOneInput",
-                   label = "Shuffle One Selection:",
-                   choices = c("Column 1", "Column 2", "Column 3", "Column 4")),
-
+                  label = "Shuffle One Selection:",
+                  choices = c("Column 1", "Column 2", "Column 3", "Column 4", "Column 5", "Column 6", "Column 7", "Column 8")),
+      
       # Input: Button to shuffle column select by selectInput above
       actionButton(inputId = "shuffleOneButton",
-                    label = "Shuffle One"),
+                   label = "Shuffle One"),
       
       #radio select for locking
       checkboxGroupInput(inputId = "lockCheck", 
                          label = "Lock Column Selection",
                          c("Column 1" = "lockCol1",
-                                     "Column 2" = "lockCol2",
-                                     "Column 3" = "lockCol3",
-                                     "Column 4" = "lockCol4")
-                         )
+                           "Column 2" = "lockCol2",
+                           "Column 3" = "lockCol3",
+                           "Column 4" = "lockCol4",
+                           "Column 5" = "lockCol5",
+                           "Column 6" = "lockCol6",
+                           "Column 7" = "lockCol7",
+                           "Column 8" = "lockCol8")
+      ),
+      
+      #Revert to prior combination, can only go one step back
+      actionButton(inputId = "revert",
+                   label = "Revert")
     ),
-
+    
     # Main panel for displaying outputs ----
     mainPanel(
       
-      # Outputs:
+      # Outputs for bonding sites
       fluidRow(
-        column(2,
-            textOutput("g1")
-            ),
-        column(2,
-            textOutput("g2")
-        ),
-        column(2,
-            textOutput("g3")
-        ),
-        column(2,
-            textOutput("g4")
+        column(8, align = "center",
+               textOutput("b1")
         ),
       ),
-    
+      
+      #Output for current sequence
       fluidRow(
-        column(2,
+        column(1,
                textOutput("p1")
         ),
-        column(2,
+        column(1,
                textOutput("p2")
         ),
-        column(2,
+        column(1,
                textOutput("p3")
         ),
-        column(2,
+        column(1,
                textOutput("p4")
+        ),
+        column(1,
+               textOutput("p5")
+        ),
+        column(1,
+               textOutput("p6")
+        ),
+        column(1,
+               textOutput("p7")
+        ),
+        column(1,
+               textOutput("p8")
         ),
       ),
       #Cryptex Image
-      img(src="cryptex2.png", align = "center", height = "300px", width = "500px")
-
+      img(src="cryptex2.png", align = "center", height = "300px", width = "500px"),
+      
+      
+      textOutput("aDist")
     )
   )
 )
 
-goal <- reactiveValues(reactG1=createColumn(),reactG2=createColumn(),reactG3=createColumn(),reactG4=createColumn())
-play <- reactiveValues(reactP1=createColumn(),reactP2=createColumn(),reactP3=createColumn(),reactP4=createColumn())
+#Initial values. Set to reactive so if changed, updates output
+play <- reactiveValues(
+  reactP1=createColumn(),reactP2=createColumn(),reactP3=createColumn(),reactP4=createColumn(),reactP5=createColumn(),reactP6=createColumn(),reactP7=createColumn(),reactP8=createColumn())
 
 # Define server
 server <- function(input, output) {
   
-  #Sets up goal outputs, will change reactively
-  output$g1 <- renderText({goal$reactG1})
-  output$g2 <- renderText({goal$reactG2})
-  output$g3 <- renderText({goal$reactG3})
-  output$g4 <- renderText({goal$reactG4})
   #Sets up player outputs, will change reactively
   output$p1 <- renderText({play$reactP1})
   output$p2 <- renderText({play$reactP2})
   output$p3 <- renderText({play$reactP3})
   output$p4 <- renderText({play$reactP4})
+  output$p5 <- renderText({play$reactP5})
+  output$p6 <- renderText({play$reactP6})
+  output$p7 <- renderText({play$reactP7})
+  output$p8 <- renderText({play$reactP8})
   
+  #Sets up bonding site outputs, will change reactively
+  output$b1 <- renderText({getBondingSite(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8, bondTab)})
+
   #Shuffle all button
   observeEvent(input$shuffleAll, {
     
-    l1 <- "lockCol1" %in% isolate(input$lockCheck)
-    l2 <- "lockCol2" %in% isolate(input$lockCheck)
-    l3 <- "lockCol3" %in% isolate(input$lockCheck)
-    l4 <- "lockCol4" %in% isolate(input$lockCheck)
+    #save current player status to standard string
+    oldPlay <<- paste(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8, sep="", collapse="")
     
+    #Check which cols are locked, assigns boolean
+    l1 <- "lockCol1" %in% input$lockCheck
+    l2 <- "lockCol2" %in% input$lockCheck
+    l3 <- "lockCol3" %in% input$lockCheck
+    l4 <- "lockCol4" %in% input$lockCheck
+    l5 <- "lockCol5" %in% input$lockCheck
+    l6 <- "lockCol6" %in% input$lockCheck
+    l7 <- "lockCol7" %in% input$lockCheck
+    l8 <- "lockCol8" %in% input$lockCheck
+    
+    #If col is not locked, replace and re-do bonding site eval
     if(!l1){play$reactP1 <- createColumn()}
     if(!l2){play$reactP2 <- createColumn()}
     if(!l3){play$reactP3 <- createColumn()}
     if(!l4){play$reactP4 <- createColumn()}
+    if(!l5){play$reactP5 <- createColumn()}
+    if(!l6){play$reactP6 <- createColumn()}
+    if(!l7){play$reactP7 <- createColumn()}
+    if(!l8){play$reactP8 <- createColumn()}
+    
+    #add copy of sequence to choices dataframe
+    nRow <- c(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8)
+    choices <<- rbind(choices, nRow)
+    
+    #Change adist
+    output$aDist <- renderText({getAdist()})
+  })
+  
+  #Mutation button, shuffles random letter in random column
+  observeEvent(input$mutation, {
+    
+    #save current player status to standard string
+    oldPlay <<- paste(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8, sep="", collapse="")
+    
+    #Pick random col, shuffle single char in that col
+    randomCol <- round(runif(1,1,8))
+    if(randomCol == 1){play$reactP1 <- oneRandomShuffle(play$reactP1)}
+    if(randomCol == 2){play$reactP2 <- oneRandomShuffle(play$reactP2)}
+    if(randomCol == 3){play$reactP3 <- oneRandomShuffle(play$reactP3)}
+    if(randomCol == 4){play$reactP4 <- oneRandomShuffle(play$reactP4)}
+    if(randomCol == 5){play$reactP5 <- oneRandomShuffle(play$reactP5)}
+    if(randomCol == 6){play$reactP6 <- oneRandomShuffle(play$reactP6)}
+    if(randomCol == 7){play$reactP7 <- oneRandomShuffle(play$reactP7)}
+    if(randomCol == 8){play$reactP8 <- oneRandomShuffle(play$reactP8)}
+    
+    #add copy of sequence to choices dataframe
+    nRow <- c(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8)
+    choices <<- rbind(choices, nRow)
+    
+    #Change adist
+    output$aDist <- renderText({getAdist()})
+  })
+  
+  #Recombination button, shuffles random number of contiguous columns
+  observeEvent(input$recomb, {
+    
+    #save current player status to standard string
+    oldPlay <<- paste(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8, sep="", collapse="")
+    
+    #Pick random number of cols, then choose acceptable start col for contiguous column selection
+    colAmount <- round(runif(1,1,8))
+    startCol <- round(runif(1,1,9-colAmount))
+    endCol <- startCol + colAmount - 1
+    markCol <- startCol
+    
+    #save reactives as list to new far so it can be iterated
+    recombVar <- c(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8)
+    
+    #iterate new list an modify as appropriate
+    for(i in startCol:endCol){
+      recombVar[markCol] <- createColumn()
+      markCol <- markCol + 1
+    }
+    
+    #re-assign basck to reactive var
+    play$reactP1 <- recombVar[1]
+    play$reactP2 <- recombVar[2]
+    play$reactP3 <- recombVar[3]
+    play$reactP4 <- recombVar[4]
+    play$reactP5 <- recombVar[5]
+    play$reactP6 <- recombVar[6]
+    play$reactP7 <- recombVar[7]
+    play$reactP8 <- recombVar[8]
+    
+    #add copy of sequence to choices dataframe
+    nRow <- c(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8)
+    choices <<- rbind(choices, nRow)
+    
+    #Change adist
+    output$aDist <- renderText({getAdist()})
   })
   
   #Shuffle one button
   observeEvent(input$shuffleOneButton, {
+    
+    #save current player status to standard string
+    oldPlay <<- paste(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8, sep="", collapse="")
+    
+    #Shuffle column based on input
     if(input$shuffleOneInput == "Column 1"){
-      play1 <- createColumn()
-      output$p1 <- renderText({play1})
+      play$reactP1 <- createColumn()
     }
-    else if(input$shuffleOneInput == "Column 2"){
-      play2 <- createColumn()
-      output$p2 <- renderText({play2})
+    if(input$shuffleOneInput == "Column 2"){
+      play$reactP2 <- createColumn()
     }
-    else if(input$shuffleOneInput == "Column 3"){
-      play3 <- createColumn()
-      output$p3 <- renderText({play3})
+    if(input$shuffleOneInput == "Column 3"){
+      play$reactP3 <- createColumn()
     }
-    else{
-      play4 <- createColumn()
-      output$p4 <- renderText({play4})
+    if(input$shuffleOneInput == "Column 4"){
+      play$reactP4 <- createColumn()
     }
+    if(input$shuffleOneInput == "Column 5"){
+      play$reactP1 <- createColumn()
+    }
+    if(input$shuffleOneInput == "Column 6"){
+      play$reactP2 <- createColumn()
+    }
+    if(input$shuffleOneInput == "Column 7"){
+      play$reactP3 <- createColumn()
+    }
+    if(input$shuffleOneInput == "Column 8"){
+      play$reactP4 <- createColumn()
+    }
+    
+    #add copy of sequence to choices dataframe
+    nRow <- c(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8)
+    choices <<- rbind(choices, nRow)
+    
+    #Change adist
+    output$aDist <- renderText({getAdist()})
+  })
+  
+  #Revert button, reverts to set from immediately prior to last action
+  observeEvent(input$revert, {
+    play$reactP1 <- substr(oldPlay, 1, 2)
+    play$reactP2 <- substr(oldPlay, 3, 4)
+    play$reactP3 <- substr(oldPlay, 5, 6)
+    play$reactP4 <- substr(oldPlay, 7, 8)
+    play$reactP5 <- substr(oldPlay, 9, 10)
+    play$reactP6 <- substr(oldPlay, 11, 12)
+    play$reactP7 <- substr(oldPlay, 13, 14)
+    play$reactP8 <- substr(oldPlay, 15, 16)
+    
+    #add marker row to show prior row was reverted
+    nRow <- c("^^", "^^", "RE", "VE", "RT", "ED", "^^", "^^")
+    choices <<- rbind(choices, nRow)
+    print(choices)
+    
+    #Change adist
+    output$aDist <- renderText({getAdist()})
   })
 }
 
