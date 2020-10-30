@@ -14,7 +14,7 @@ choices <- data.frame(matrix(ncol = 8, nrow = 1))
 colnames(choices) <- c("p1","p2","p3","p4","p5","p6","p7","p8")
 
 
-# Define UI for app ----
+#USER INTERFACE
 ui <- fluidPage(
   
   # App title ----
@@ -111,12 +111,43 @@ ui <- fluidPage(
   )
 )
 
+
+
+##HELPER FUNCTION SECTION
+#function for modal box to appear when win condition is reached
+getModal <- function(){
+  showModal(modalDialog(
+    title = "You found the secret message!",
+    "Congratulations, great job!",
+    easyClose = TRUE,
+    footer = NULL
+  ))
+}
+
+startModal <- function(){
+  showModal(modalDialog(
+    title = "Bio-Cryptex",
+    selectInput(inputId = "keySelect",
+                label = "Select number of secret keys:",
+                choices = c("1", "2", "3", "4", "5", "6", "7", "8")),
+    actionButton(inputId = "confirmKeys",
+                 label = "Confirm"),
+    easyClose = FALSE,
+    footer = NULL
+  ))
+}
+
+
+##GLOBAL REACTIVE
 #Initial values. Set to reactive so if changed, updates output
 play <- reactiveValues(
   reactP1=createColumn(),reactP2=createColumn(),reactP3=createColumn(),reactP4=createColumn(),reactP5=createColumn(),reactP6=createColumn(),reactP7=createColumn(),reactP8=createColumn())
 
-# Define server
+
+##SERVER
 server <- function(input, output) {
+  
+  showModal(startModal)
   
   #Sets up player outputs, will change reactively
   output$p1 <- renderText({play$reactP1})
@@ -134,8 +165,9 @@ server <- function(input, output) {
   #Shuffle all button
   observeEvent(input$shuffleAll, {
     
-    #save current player status to standard string
+    #save current player status
     oldPlay <<- paste(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8, sep="", collapse="")
+    saveBond()
     
     #Check which cols are locked, assigns boolean
     l1 <- "lockCol1" %in% input$lockCheck
@@ -157,12 +189,18 @@ server <- function(input, output) {
     if(!l7){play$reactP7 <- createColumn()}
     if(!l8){play$reactP8 <- createColumn()}
     
+    ##Clean up
     #add copy of sequence to choices dataframe
     nRow <- c(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8)
     choices <<- rbind(choices, nRow)
     
     #Change adist
     output$aDist <- renderText({getAdist()})
+    
+    #Check win condition
+    if(checkGoal(oldPlay)){
+      getModal(oldPlay)
+    }
   })
   
   #Mutation button, shuffles random letter in random column
@@ -170,6 +208,7 @@ server <- function(input, output) {
     
     #save current player status to standard string
     oldPlay <<- paste(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8, sep="", collapse="")
+    saveBond()
     
     #Pick random col, shuffle single char in that col
     randomCol <- round(runif(1,1,8))
@@ -182,12 +221,18 @@ server <- function(input, output) {
     if(randomCol == 7){play$reactP7 <- oneRandomShuffle(play$reactP7)}
     if(randomCol == 8){play$reactP8 <- oneRandomShuffle(play$reactP8)}
     
+    #Clean up
     #add copy of sequence to choices dataframe
     nRow <- c(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8)
     choices <<- rbind(choices, nRow)
     
     #Change adist
     output$aDist <- renderText({getAdist()})
+    
+    #Check win condition
+    if(checkGoal(oldPlay)){
+      getModal(oldPlay)
+    }
   })
   
   #Recombination button, shuffles random number of contiguous columns
@@ -195,6 +240,7 @@ server <- function(input, output) {
     
     #save current player status to standard string
     oldPlay <<- paste(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8, sep="", collapse="")
+    saveBond()
     
     #Pick random number of cols, then choose acceptable start col for contiguous column selection
     colAmount <- round(runif(1,1,8))
@@ -221,12 +267,18 @@ server <- function(input, output) {
     play$reactP7 <- recombVar[7]
     play$reactP8 <- recombVar[8]
     
+    #Clean up
     #add copy of sequence to choices dataframe
     nRow <- c(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8)
     choices <<- rbind(choices, nRow)
     
     #Change adist
     output$aDist <- renderText({getAdist()})
+    
+    #Check win condition
+    if(checkGoal(oldPlay)){
+      getModal(oldPlay)
+    }
   })
   
   #Shuffle one button
@@ -234,6 +286,7 @@ server <- function(input, output) {
     
     #save current player status to standard string
     oldPlay <<- paste(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8, sep="", collapse="")
+    saveBond()
     
     #Shuffle column based on input
     if(input$shuffleOneInput == "Column 1"){
@@ -261,16 +314,24 @@ server <- function(input, output) {
       play$reactP4 <- createColumn()
     }
     
+    #Clean up
     #add copy of sequence to choices dataframe
     nRow <- c(play$reactP1, play$reactP2, play$reactP3, play$reactP4, play$reactP5, play$reactP6, play$reactP7, play$reactP8)
     choices <<- rbind(choices, nRow)
     
     #Change adist
     output$aDist <- renderText({getAdist()})
+    
+    #Check win condition
+    if(checkGoal(oldPlay)){
+      getModal(oldPlay)
+    }
   })
   
   #Revert button, reverts to set from immediately prior to last action
   observeEvent(input$revert, {
+    
+    #Reset values
     play$reactP1 <- substr(oldPlay, 1, 2)
     play$reactP2 <- substr(oldPlay, 3, 4)
     play$reactP3 <- substr(oldPlay, 5, 6)
@@ -280,10 +341,11 @@ server <- function(input, output) {
     play$reactP7 <- substr(oldPlay, 13, 14)
     play$reactP8 <- substr(oldPlay, 15, 16)
     
+    output$b1 <- renderText(getOldBond())
+    
     #add marker row to show prior row was reverted
     nRow <- c("^^", "^^", "RE", "VE", "RT", "ED", "^^", "^^")
     choices <<- rbind(choices, nRow)
-    print(choices)
     
     #Change adist
     output$aDist <- renderText({getAdist()})
