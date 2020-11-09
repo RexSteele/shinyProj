@@ -7,6 +7,10 @@ goalArr <- vector()
 #Current win target
 goalBind = "GATTACCA"
 
+#Move counter for player
+moveCount <- 0
+revertFlag <- TRUE
+
 #Current/Old Bind sites
 currBind1 = ""
 currBind2 = ""
@@ -51,7 +55,8 @@ randGoalChar <- function(){
 
 #Sets up goal array based on user input
 createGoal <- function(keyAmount){
-
+  goalArr <<- vector()
+  moveCount <<- 0
   for(x in 1:keyAmount){
     if(x == 1){
       goalArr[1] <<- "GATTACCA"
@@ -61,6 +66,22 @@ createGoal <- function(keyAmount){
   }
 }
 
+#Getter/helper func for moveCount
+getMoveCount <- function(){
+  return(moveCount)
+}
+addMoveCount <- function(){
+  if(revertFlag){
+    revertFlag <<- FALSE
+  }
+  moveCount <<- moveCount + 1
+}
+subMoveCount <- function(){
+  if(!revertFlag){
+    moveCount <<- moveCount - 1
+    revertFlag <<- TRUE
+  }
+}
 # Getters goal Bind
 getGoalBind <- function(){
   return(goalArr)

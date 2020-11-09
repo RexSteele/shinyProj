@@ -1,0 +1,10 @@
+name: shinyproj
+title:
+username:
+account: rexs
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3175903
+bundleId: 3826430
+url: https://rexs.shinyapps.io/shinyproj/
+when: 1604639487.19794

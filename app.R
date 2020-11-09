@@ -27,7 +27,7 @@ ui <- fluidPage(
 
       # Input: Button to shuffle all values
       actionButton(inputId = "shuffleAll",
-                   label = "Shuffle All"),
+                   label = "Extinction"),
 
       # Input: Button to shuffle one random letter in random column
       actionButton(inputId = "mutation",
@@ -61,7 +61,11 @@ ui <- fluidPage(
 
       #Revert to prior combination, can only go one step back
       actionButton(inputId = "revert",
-                   label = "Revert")
+                   label = "Revert"),
+
+      #moveCount output
+      htmlOutput("moveCount")
+
     ),
 
     # Main panel for displaying outputs ----
@@ -148,19 +152,23 @@ server <- function(input, output) {
 
   #updates adist values. Has to be inside server function due to manipulating output object
   adistOut <- function(){
-    output$aDist1 <- renderText({paste("Secret Key 1 adist: ", calcAdist(1))})
+    output$aDist1 <- renderText({paste("Secret Key 1 score: ", calcAdist(1))})
     if(!is.na(getGoalBind()[2])){
-      output$aDist2 <- renderText({paste("Secret Key 2 adist: ",calcAdist(2))})
+      output$aDist2 <- renderText({paste("Secret Key 2 score: ",calcAdist(2))})
     }
     if(!is.na(getGoalBind()[3])){
-      output$aDist3 <- renderText({paste("Secret Key 3 adist: ",calcAdist(3))})
+      output$aDist3 <- renderText({paste("Secret Key 3 score: ",calcAdist(3))})
     }
     if(!is.na(getGoalBind()[4])){
-      output$aDist4 <- renderText({paste("Secret Key 4 adist: ",calcAdist(4))})
+      output$aDist4 <- renderText({paste("Secret Key 4 score: ",calcAdist(4))})
     }
     if(!is.na(getGoalBind()[5])){
-      output$aDist5 <- renderText({paste("Secret Key 5 adist: ",calcAdist(5))})
+      output$aDist5 <- renderText({paste("Secret Key 5 score: ",calcAdist(5))})
     }
+  }
+
+  moveOut <- function(){
+    output$moveCount <- renderPrint({HTML(paste0("<b>MOVE COUNT: ", getMoveCount(), "</b>"))})
   }
 
   #Launch Start Modal pop-up
@@ -205,8 +213,16 @@ server <- function(input, output) {
     output$p8 <- renderText({getCurrPlay8()})
     output$b1 <- renderText({getWholeCurrBind()})
 
-    #Output adist values
+    #Reset then output adist values
+    output$aDist1 <- renderText({""})
+    output$aDist2 <- renderText({""})
+    output$aDist3 <- renderText({""})
+    output$aDist4 <- renderText({""})
+    output$aDist5 <- renderText({""})
     adistOut()
+
+    #Start move Count
+    moveOut()
 
     #Check win condition
     if(checkGoal() != FALSE){
@@ -281,7 +297,9 @@ server <- function(input, output) {
     output$p8 <- renderText({getCurrPlay8()})
     output$b1 <- renderText({getWholeCurrBind()})
 
-    #Output adist values
+    #Output adist values and increment moveCount
+    addMoveCount()
+    moveOut()
     adistOut()
 
     #Check win condition
@@ -349,6 +367,8 @@ server <- function(input, output) {
     output$b1 <- renderText({getWholeCurrBind()})
 
     #Output adist values
+    addMoveCount()
+    moveOut()
     adistOut()
 
     #Check win condition
@@ -415,6 +435,8 @@ server <- function(input, output) {
     output$b1 <- renderText({getWholeCurrBind()})
 
     #Output adist values
+    addMoveCount()
+    moveOut()
     adistOut()
 
     #Check win condition
@@ -481,6 +503,8 @@ server <- function(input, output) {
     output$b1 <- renderText({getWholeCurrBind()})
 
     #Output adist values
+    addMoveCount()
+    output$moveCount <- renderText({getMoveCount()})
     adistOut()
 
     #Check win condition
@@ -512,6 +536,8 @@ server <- function(input, output) {
     output$b1 <- renderText({getWholeCurrBind()})
 
     #Output adist values
+    subMoveCount()
+    moveOut()
     adistOut()
   })
 
