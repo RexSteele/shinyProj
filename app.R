@@ -1,6 +1,4 @@
 library(shiny)
-source("calcVals.R")
-source("gameVals.R")
 
 
 #Import data from RVD-DNA.txt as data frame
@@ -149,6 +147,9 @@ startModal <- function(){
 
 ##SERVER
 server <- function(input, output) {
+
+  source("calcVals.R", local=TRUE)
+  source("gameVals.R", local=TRUE)
 
   #updates adist values. Has to be inside server function due to manipulating output object
   adistOut <- function(){
