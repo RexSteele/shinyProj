@@ -30,35 +30,30 @@ oneRandomShuffle <- function(oldCol){
     tempCol <- substr(oldCol, 1, 1)
     tempCol <- paste(tempCol, "<span style=\"color:red\">", tempChar, "</span>", sep="")
   }
-
   return(tempCol)
 }
 
 #Determine binding site for column
 calcBindingSite <- function(currentCol, bindTab){
-
   #String to hold result
   result <- ""
-
   #Subselect matrix selection matching sequence, get highest valued column match, randomly choose between ties
   result <- paste(result, colnames(bindTab)[max.col(bindTab[currentCol,], ties.method = "random")], sep = "", collapse = "")
-
   return(result)
 }
 
 #get adist for current binding site string compared to goal string
 calcAdist <- function(goalArrPos){
-  return(adist(getWholeCurrBind(), getGoalBind()[goalArrPos]))
+  return(adist(getWholeCurrBind(), getGoalArr()[goalArrPos]))
 }
 
 #check provided string against goal
 checkGoal <- function(){
-  x <- length(getGoalBind())
+  x <- length(getGoalArr())
   for(i in 1:x){
-    if(identical(getWholeCurrBind(), getGoalBind()[i])){
-      return(getGoalBind()[i])
+    if(identical(getWholeCurrBind(), getGoalArr()[i])){
+      return(getGoalArr()[i])
     }
   }
-
   return(FALSE)
 }
