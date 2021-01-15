@@ -11,6 +11,10 @@ goalBind = "GATTACCA"
 moveCount <- 0
 revertFlag <- TRUE
 
+#type of move
+moveType = ""
+oldMoveType = ""
+
 #Current/Old Bind sites
 currBind1 = ""
 currBind2 = ""
@@ -64,6 +68,14 @@ createGoal <- function(keyAmount){
       goalArr[x] <<- paste(randGoalChar(), randGoalChar(), randGoalChar(), randGoalChar(), randGoalChar(), randGoalChar(), randGoalChar(), randGoalChar(), collapse = "", sep = "")
     }
   }
+}
+
+#get/set for movetype
+getMoveType <- function(){
+  return(moveType)
+}
+setMoveType <- function(newMove){
+  moveType <<- newMove
 }
 
 #Getter/helper func for moveCount

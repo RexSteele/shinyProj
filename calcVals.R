@@ -25,10 +25,10 @@ oneRandomShuffle <- function(oldCol){
 
   if(randomPos == 1){
     tempCol <- substr(oldCol, 2, 2)
-    tempCol <- paste(tempChar, tempCol, sep="")
+    tempCol <- paste("<span style=\"color:red\">", tempChar, "</span>", tempCol, sep="")
   }else{
     tempCol <- substr(oldCol, 1, 1)
-    tempCol <- paste(tempCol, tempChar, sep="")
+    tempCol <- paste(tempCol, "<span style=\"color:red\">", tempChar, "</span>", sep="")
   }
 
   return(tempCol)

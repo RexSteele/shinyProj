@@ -1,4 +1,6 @@
 library(shiny)
+library(shinyjs)
+source("shinyDrop.R")
 
 
 #Import data from RVD-DNA.txt as data frame
@@ -7,12 +9,13 @@ rownames(bindTab) <- bindTab[,1]
 bindTab$X <- NULL
 
 #df for player choices made
-choices <- data.frame(matrix(ncol = 8, nrow = 1))
-colnames(choices) <- c("p1","p2","p3","p4","p5","p6","p7","p8")
+choices <- data.frame(matrix(ncol = 9, nrow = 1))
+colnames(choices) <- c("p1","p2","p3","p4","p5","p6","p7","p8", "mt")
 
 
 #USER INTERFACE
 ui <- fluidPage(
+  useShinyjs(),
 
   # App title ----
   titlePanel("Bio - Cryptex"),
@@ -60,6 +63,10 @@ ui <- fluidPage(
       #Revert to prior combination, can only go one step back
       actionButton(inputId = "revert",
                    label = "Revert"),
+
+      #Auto-solve button
+      actionButton(inputId = "autoSolve",
+                   label = "Auto-Solve"),
 
       #moveCount output
       htmlOutput("moveCount")
@@ -119,6 +126,10 @@ ui <- fluidPage(
 #MODAL FUNCTION SECTION
 #function for modal box to appear when win condition is reached
 getEndModal <- function(secretPass){
+  saveData(choices)
+  choices <<- NULL
+  choices <<- data.frame(matrix(ncol = 9, nrow = 1))
+  colnames(choices) <<- c("p1","p2","p3","p4","p5","p6","p7","p8", "mt")
   showModal(modalDialog(
     title = "You found the secret message ", secretPass, "!",
     "Congratulations, great job!",
@@ -154,7 +165,7 @@ server <- function(input, output) {
   #update dataframe
   updateData <- function(){
     #add copy of sequence to choices dataframe
-    nRow <- c(gsub("[^A-Z]", "", getCurrPlay1()), gsub("[^A-Z]", "", getCurrPlay2()), gsub("[^A-Z]", "", getCurrPlay3()), gsub("[^A-Z]", "", getCurrPlay4()), gsub("[^A-Z]", "", getCurrPlay5()), gsub("[^A-Z]", "", getCurrPlay6()), gsub("[^A-Z]", "", getCurrPlay7()), gsub("[^A-Z]", "", getCurrPlay8()))
+    nRow <- c(gsub("[^A-Z]", "", getCurrPlay1()), gsub("[^A-Z]", "", getCurrPlay2()), gsub("[^A-Z]", "", getCurrPlay3()), gsub("[^A-Z]", "", getCurrPlay4()), gsub("[^A-Z]", "", getCurrPlay5()), gsub("[^A-Z]", "", getCurrPlay6()), gsub("[^A-Z]", "", getCurrPlay7()), gsub("[^A-Z]", "", getCurrPlay8()), getMoveType())
     choices <<- rbind(choices, nRow)
   }
 
@@ -311,6 +322,7 @@ server <- function(input, output) {
     ##Clean up
     #Output the values
     updateVals()
+    setMoveType("Extinction")
 
     #Output adist values, increment moveCount, update dataframe
     addMoveCount()
@@ -336,41 +348,42 @@ server <- function(input, output) {
     #Pick random col, shuffle single char in that col
     randomCol <- round(runif(1,1,8))
     if(randomCol == 1){
-      setCurrPlay1(paste("<span style=\"color:red\">", oneRandomShuffle(getCurrPlay1()), "</span>"))
+      setCurrPlay1(oneRandomShuffle(getCurrPlay1()))
       setCurrBind1(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay1()), bindTab))
     }
     if(randomCol == 2){
-      setCurrPlay2(paste("<span style=\"color:red\">", oneRandomShuffle(getCurrPlay2()), "</span>"))
+      setCurrPlay2(oneRandomShuffle(getCurrPlay2()))
       setCurrBind2(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay2()), bindTab))
     }
     if(randomCol == 3){
-      setCurrPlay3(paste("<span style=\"color:red\">", oneRandomShuffle(getCurrPlay3()), "</span>"))
+      setCurrPlay3(oneRandomShuffle(getCurrPlay3()))
       setCurrBind3(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay3()), bindTab))
     }
     if(randomCol == 4){
-      setCurrPlay4(paste("<span style=\"color:red\">", oneRandomShuffle(getCurrPlay4()), "</span>"))
+      setCurrPlay4(oneRandomShuffle(getCurrPlay4()))
       setCurrBind4(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay4()), bindTab))
     }
     if(randomCol == 5){
-      setCurrPlay5(paste("<span style=\"color:red\">", oneRandomShuffle(getCurrPlay5()), "</span>"))
+      setCurrPlay5(oneRandomShuffle(getCurrPlay5()))
       setCurrBind5(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay5()), bindTab))
     }
     if(randomCol == 6){
-      setCurrPlay6(paste("<span style=\"color:red\">", oneRandomShuffle(getCurrPlay6()), "</span>"))
+      setCurrPlay6(oneRandomShuffle(getCurrPlay6()))
       setCurrBind6(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay6()), bindTab))
     }
     if(randomCol == 7){
-      setCurrPlay7(paste("<span style=\"color:red\">", oneRandomShuffle(getCurrPlay7()), "</span>"))
+      setCurrPlay7(oneRandomShuffle(getCurrPlay7()))
       setCurrBind7(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay7()), bindTab))
     }
     if(randomCol == 8){
-      setCurrPlay8(paste("<span style=\"color:red\">", oneRandomShuffle(getCurrPlay8()), "</span>"))
+      setCurrPlay8(oneRandomShuffle(getCurrPlay8()))
       setCurrBind8(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay8()), bindTab))
     }
 
     ##Clean up
     #Output the values
     updateVals()
+    setMoveType("Mutation")
 
     #Output adist values, increment moveCount, update dataframe
     addMoveCount()
@@ -430,6 +443,7 @@ server <- function(input, output) {
     ##Clean up
     #Output the values
     updateVals()
+    setMoveType("Recombination")
 
     #Output adist values, increment moveCount, update dataframe
     addMoveCount()
@@ -489,6 +503,7 @@ server <- function(input, output) {
     ##Clean up
     #Output the values
     updateVals()
+    setMoveType("Shuffle One")
 
     #Output adist values, increment moveCount, update dataframe
     addMoveCount()
@@ -510,7 +525,7 @@ server <- function(input, output) {
     setWholeCurrBind(getWholeOldBind())
 
     #add marker row to show prior row was reverted
-    nRow <- c("^^", "^^", "RE", "VE", "RT", "ED", "^^", "^^")
+    nRow <- c("^^", "^^", "^^", "^^", "^^", "^^", "^^", "^^", "Reverted")
     choices <<- rbind(choices, nRow)
 
     #Output the values
@@ -520,6 +535,22 @@ server <- function(input, output) {
     subMoveCount()
     moveOut()
     adistOut()
+  })
+
+  observeEvent(input$autoSolve, {
+    while(checkGoal() == FALSE){
+      if(calcAdist(1) >= 5){
+        shinyjs::click("shuffleAll")
+        invalidateLater(3000)
+        Sys.sleep(2)
+        print("shuffles")
+      }else{
+        shinyjs::click("recomb")
+        invalidateLater(3000)
+        Sys.sleep(2)
+        print("recomb")
+      }
+    }
   })
 
   #Play again button on win modal
