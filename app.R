@@ -1,5 +1,5 @@
 library(shiny)
-library(shinyjs)
+# library(shinyjs)
 source("shinyDrop.R")
 
 
@@ -15,7 +15,7 @@ colnames(choices) <- c("p1","p2","p3","p4","p5","p6","p7","p8", "mt")
 
 #USER INTERFACE
 ui <- fluidPage(
-  useShinyjs(),
+  # useShinyjs(),
 
   # App title ----
   titlePanel("Bio - Cryptex"),
@@ -165,7 +165,7 @@ server <- function(input, output) {
   #update dataframe
   updateData <- function(){
     #add copy of sequence to choices dataframe
-    nRow <- c(gsub("[^A-Z]", "", getCurrPlay1()), gsub("[^A-Z]", "", getCurrPlay2()), gsub("[^A-Z]", "", getCurrPlay3()), gsub("[^A-Z]", "", getCurrPlay4()), gsub("[^A-Z]", "", getCurrPlay5()), gsub("[^A-Z]", "", getCurrPlay6()), gsub("[^A-Z]", "", getCurrPlay7()), gsub("[^A-Z]", "", getCurrPlay8()), getMoveType())
+    nRow <- c(gsub("[^A-Z]", "", getCurrPlay(1)), gsub("[^A-Z]", "", getCurrPlay(2)), gsub("[^A-Z]", "", getCurrPlay(3)), gsub("[^A-Z]", "", getCurrPlay(4)), gsub("[^A-Z]", "", getCurrPlay(5)), gsub("[^A-Z]", "", getCurrPlay(6)), gsub("[^A-Z]", "", getCurrPlay(7)), gsub("[^A-Z]", "", getCurrPlay(8)), getMoveType())
     choices <<- rbind(choices, nRow)
   }
 
@@ -222,7 +222,7 @@ server <- function(input, output) {
     #set player vals
     for(x in 1:8){
       setCurrPlay(createColumn(), x)
-      setCurrBind(calcBindingSite(getCurrPlay(x), bindTab))
+      setCurrBind(calcBindingSite(getCurrPlay(x), bindTab), x)
     }
 
     #set old vals to current vals for first iteration
@@ -406,21 +406,21 @@ server <- function(input, output) {
   })
 
   #Auto Solve functionality #####TO DO DOES NOT WORK AS EXPECTED#####
-  observeEvent(input$autoSolve, {
-    while(checkGoal() == FALSE){
-      if(calcAdist(1) >= 5){
-        shinyjs::click("shuffleAll")
-        invalidateLater(3000)
-        Sys.sleep(2)
-        print("shuffles")
-      }else{
-        shinyjs::click("recomb")
-        invalidateLater(3000)
-        Sys.sleep(2)
-        print("recomb")
-      }
-    }
-  })
+  # observeEvent(input$autoSolve, {
+  #   while(checkGoal() == FALSE){
+  #     if(calcAdist(1) >= 5){
+  #       shinyjs::click("shuffleAll")
+  #       invalidateLater(3000)
+  #       Sys.sleep(2)
+  #       print("shuffles")
+  #     }else{
+  #       shinyjs::click("recomb")
+  #       invalidateLater(3000)
+  #       Sys.sleep(2)
+  #       print("recomb")
+  #     }
+  #   }
+  # })
 
   #Play again button on win modal
   observeEvent(input$playAgain, {
