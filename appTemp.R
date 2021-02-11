@@ -9,48 +9,48 @@ rownames(bindTab) <- bindTab[,1]
 bindTab$X <- NULL
 
 #df for player choices made
-choices <- data.frame(matrix(ncol = 14, nrow = 1))
-colnames(choices) <- c("p1","p2","p3","p4","p5","p6","p7","p8", "mt", "adist1", "adist2", "adist3", "adist4", "adist5")
+choices <- data.frame(matrix(ncol = 9, nrow = 1))
+colnames(choices) <- c("p1","p2","p3","p4","p5","p6","p7","p8", "mt")
 
 
 #USER INTERFACE
 ui <- fluidPage(
-
+  
   # App title ----
   titlePanel("Bio - Cryptex"),
-
+  
   # Sidebar layout with a input and output definitions ----
   sidebarLayout(
-
+    
     # Sidebar panel for inputs ----
     sidebarPanel(
-
+      
       width = 4,
-
+      
       # Input: Button to shuffle all values
       actionButton(inputId = "shuffleAll",
                    label = "Extinction"),
-
+      
       # Input: Button to shuffle one random letter in random column
       actionButton(inputId = "mutation",
                    label = "Mutate"),
-
+      
       # Input: Button to shuffle a random set of contiguous columns
       actionButton(inputId = "recomb",
                    label = "Recombination"),
-
+      
       # Input: Select entry for column to shuffle
       selectInput(inputId = "shuffleOneInput",
-                  label = "Choose specific column to mutate:",
+                  label = "Shuffle One Selection:",
                   choices = c("Column 1", "Column 2", "Column 3", "Column 4", "Column 5", "Column 6", "Column 7", "Column 8")),
-
+      
       # Input: Button to shuffle column select by selectInput above
       actionButton(inputId = "shuffleOneButton",
-                   label = "Specific mutation"),
-
+                   label = "Shuffle One"),
+      
       #radio select for locking
       checkboxGroupInput(inputId = "lockCheck",
-                         label = "Lock Column before extinction:",
+                         label = "Lock Column Selection",
                          c("Column 1" = "lockCol1",
                            "Column 2" = "lockCol2",
                            "Column 3" = "lockCol3",
@@ -60,49 +60,63 @@ ui <- fluidPage(
                            "Column 7" = "lockCol7",
                            "Column 8" = "lockCol8")
       ),
-
+      
       #Revert to prior combination, can only go one step back
       actionButton(inputId = "revert",
                    label = "Revert"),
-
+      
       #Auto-solve button
       actionButton(inputId = "autoSolve",
                    label = "Auto-Solve"),
-
+      
       #moveCount output
       htmlOutput("moveCount")
-
+      
     ),
-
+    
     # Main panel for displaying outputs ----
     mainPanel(
-
+      
       # Outputs for binding sites
       fluidRow(
-        column(9, align = "center", "Binding Site", style = "font-size:40px; text-shadow: 3px 3px 3px #aaa;",
+        column(8, align = "center",
                textOutput("b1")
-        )
+        ),
       ),
-
+      
       #Output for current sequence
-      fluidRow(style = "background-image: url(Criptex_v2_copy.png); width: 600px; height: 185px; margin-top: 50px; font-weight: bold;",
-         htmlOutput("p1", style="margin-left: 90px; margin-top: 85px"),
-         htmlOutput("p2", style="margin-left: 155px; margin-top: -20px"),
-         htmlOutput("p3", style="margin-left: 225px; margin-top: -23px"),
-         htmlOutput("p4", style="margin-left: 290px; margin-top: -20px"),
-         htmlOutput("p5", style="margin-left: 360px; margin-top: -20px"),
-         htmlOutput("p6", style="margin-left: 425px; margin-top: -20px"),
-         htmlOutput("p7", style="margin-left: 495px; margin-top: -20px"),
-         htmlOutput("p8", style="margin-left: 560px; margin-top: -20px")
+      fluidRow(style = "background-image: url(Criptex_v1_copy.png); width: 600px; height: 185px; margin-top: 100px",
+               column(2, align= "center",
+                      htmlOutput("p1")
+               ),
+               column(2,
+                      htmlOutput("p2")
+               ),
+               column(2,
+                      htmlOutput("p3")
+               ),
+               column(2,
+                      htmlOutput("p4")
+               ),
+               column(2,
+                      htmlOutput("p5")
+               ),
+               column(2,
+                      htmlOutput("p6")
+               ),
+               column(2,
+                      htmlOutput("p7")
+               ),
+               column(2,
+                      htmlOutput("p8")
+               ),
       ),
-
-      fluidRow(style = "font-size:40px; text-shadow: 3px 3px 3px #aaa;",
-        textOutput("aDist1"),
-        textOutput("aDist2"),
-        textOutput("aDist3"),
-        textOutput("aDist4"),
-        textOutput("aDist5")
-      ),
+      
+      textOutput("aDist1"),
+      textOutput("aDist2"),
+      textOutput("aDist3"),
+      textOutput("aDist4"),
+      textOutput("aDist5")
     )
   )
 )
@@ -112,15 +126,15 @@ ui <- fluidPage(
 getEndModal <- function(secretPass){
   saveData(choices)
   choices <<- NULL
-  choices <<- data.frame(matrix(ncol = 14, nrow = 1))
-  colnames(choices) <<- c("p1","p2","p3","p4","p5","p6","p7","p8", "mt", "adist1", "adist2", "adist3", "adist4", "adist5")
+  choices <<- data.frame(matrix(ncol = 9, nrow = 1))
+  colnames(choices) <<- c("p1","p2","p3","p4","p5","p6","p7","p8", "mt")
   showModal(modalDialog(
     title = "You found the secret message ", secretPass, "!",
     "Congratulations, great job!",
     actionButton(inputId = "playAgain",
-                  label = "Play Again"),
+                 label = "Play Again"),
     actionButton(inputId = "quit",
-                  label = "Quit"),
+                 label = "Quit"),
     easyClose = TRUE,
     footer = NULL
   ))
@@ -142,24 +156,24 @@ startModal <- function(){
 
 ##SERVER
 server <- function(input, output) {
-
+  
   source("calcVals.R", local=TRUE)
   source("gameVals.R", local=TRUE)
-
+  
   #update dataframe
   updateData <- function(){
     #add copy of sequence to choices dataframe
-    nRow <- c(gsub("[^A-Z]", "", getCurrPlay(1)), gsub("[^A-Z]", "", getCurrPlay(2)), gsub("[^A-Z]", "", getCurrPlay(3)), gsub("[^A-Z]", "", getCurrPlay(4)), gsub("[^A-Z]", "", getCurrPlay(5)), gsub("[^A-Z]", "", getCurrPlay(6)), gsub("[^A-Z]", "", getCurrPlay(7)), gsub("[^A-Z]", "", getCurrPlay(8)), getMoveType(), calcAdist(1), calcAdist(2), calcAdist(3), calcAdist(4), calcAdist(5))
+    nRow <- c(gsub("[^A-Z]", "", getCurrPlay(1)), gsub("[^A-Z]", "", getCurrPlay(2)), gsub("[^A-Z]", "", getCurrPlay(3)), gsub("[^A-Z]", "", getCurrPlay(4)), gsub("[^A-Z]", "", getCurrPlay(5)), gsub("[^A-Z]", "", getCurrPlay(6)), gsub("[^A-Z]", "", getCurrPlay(7)), gsub("[^A-Z]", "", getCurrPlay(8)), getMoveType())
     choices <<- rbind(choices, nRow)
   }
-
+  
   #remove HTML tags from player values
   flushHTML <- function(){
     for(x in 1:8){
       setCurrPlay(gsub("[^A-Z]", "", getCurrPlay(x)), x)
     }
   }
-
+  
   #update player and bind values
   updateVals <- function(){
     output$p1 <- renderPrint({HTML(getCurrPlay(1))})
@@ -170,9 +184,9 @@ server <- function(input, output) {
     output$p6 <- renderPrint({HTML(getCurrPlay(6))})
     output$p7 <- renderPrint({HTML(getCurrPlay(7))})
     output$p8 <- renderPrint({HTML(getCurrPlay(8))})
-    output$b1 <- renderPrint({HTML(gsub("([A-Z])", "\\1 \\2", getWholeCurrBind()))})
+    output$b1 <- renderPrint({HTML(getWholeCurrBind())})
   }
-
+  
   #updates adist values. Has to be inside server function due to manipulating output object
   adistOut <- function(){
     output$aDist1 <- renderText({paste("Secret Key 1 score: ", calcAdist(1))})
@@ -189,51 +203,51 @@ server <- function(input, output) {
       output$aDist5 <- renderText({paste("Secret Key 5 score: ",calcAdist(5))})
     }
   }
-
+  
   moveOut <- function(){
     output$moveCount <- renderPrint({HTML(paste0("<b>MOVE COUNT: ", getMoveCount(), "</b>"))})
   }
-
+  
   cleanUp <- function(curMove){
     ##Clean up
     #Output the values
     updateVals()
     setMoveType(curMove)
-
+    
     #Output adist values, increment moveCount, update dataframe
     addMoveCount()
     moveOut()
     adistOut()
     updateData()
-
+    
     #Check win condition
     if(checkGoal() != FALSE){
       getEndModal(checkGoal())
     }
   }
-
+  
   #Launch Start Modal pop-up
   startModal()
-
+  
   #SERVER EVENTS
   #Start game modal confirm button
   observeEvent(input$confirmKeys, {
     createGoal(input$keySelect)
     removeModal()
-
+    
     #set player vals
     for(x in 1:8){
       setCurrPlay(createColumn(), x)
       setCurrBind(calcBindingSite(getCurrPlay(x), bindTab), x)
     }
-
+    
     #set old vals to current vals for first iteration
     setWholeOldPlay(getWholeCurrPlay())
     setWholeOldBind(getWholeCurrBind())
-
+    
     #Output the values
     updateVals()
-
+    
     #Reset then output adist values
     output$aDist1 <- renderText({""})
     output$aDist2 <- renderText({""})
@@ -241,25 +255,25 @@ server <- function(input, output) {
     output$aDist4 <- renderText({""})
     output$aDist5 <- renderText({""})
     adistOut()
-
+    
     #Start move Count
     moveOut()
-
+    
     #Check win condition
     if(checkGoal() != FALSE){
       getEndModal(checkGoal())
     }
   })
-
+  
   #Shuffle all button
   observeEvent(input$shuffleAll, {
-
+    
     flushHTML()
-
+    
     #save current player status
     setWholeOldPlay(getWholeCurrPlay())
     setWholeOldBind(getWholeCurrBind())
-
+    
     #If col is not locked, replace and re-do binding site eval
     for(x in 1:8){
       if(!(paste("lockCol", toString(x), sep="") %in% input$lockCheck)){
@@ -267,59 +281,59 @@ server <- function(input, output) {
         setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(x)), bindTab), x)
       }
     }
-
+    
     cleanUp("Extinction")
   })
-
+  
   #Mutation button, shuffles random letter in random column
   observeEvent(input$mutation, {
-
+    
     flushHTML()
-
+    
     #save current player status
     setWholeOldPlay(getWholeCurrPlay())
     setWholeOldBind(getWholeCurrBind())
-
+    
     #Pick random col, shuffle single char in that col
     randomCol <- round(runif(1,1,8))
     setCurrPlay(oneRandomShuffle(getCurrPlay(randomCol)), randomCol)
     setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(randomCol)), bindTab), randomCol)
-
+    
     cleanUp("Mutation")
   })
-
+  
   #Recombination button, shuffles random number of contiguous columns
   observeEvent(input$recomb, {
-
+    
     flushHTML()
-
+    
     #save current player status
     setWholeOldPlay(getWholeCurrPlay())
     setWholeOldBind(getWholeCurrBind())
-
+    
     #Pick random number of cols, then choose acceptable start col for contiguous column selection
     colAmount <- round(runif(1,1,8))
     startCol <- round(runif(1,1,9-colAmount))
     endCol <- startCol + colAmount - 1
     markCol <- startCol
-
+    
     for(x in startCol:endCol){
       setCurrPlay(paste("<span style=\"color:red\">", createColumn(), "</span>", sep= "", collapse = ""), x)
       setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(x)), bindTab), x)
     }
-
+    
     cleanUp("Recombination")
   })
-
+  
   #Shuffle one button
   observeEvent(input$shuffleOneButton, {
-
+    
     flushHTML()
-
+    
     #save current player status
     setWholeOldPlay(getWholeCurrPlay())
     setWholeOldBind(getWholeCurrBind())
-
+    
     #Shuffle column based on input
     for(x in 1:8){
       if(paste("Column", toString(x), sep=" ") %in% input$shuffleOneInput){
@@ -327,41 +341,41 @@ server <- function(input, output) {
         setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(x)), bindTab), x)
       }
     }
-
+    
     cleanUp("Shuffle One")
   })
-
+  
   #Revert button, reverts to set from immediately prior to last action
   observeEvent(input$revert, {
-
+    
     #Reset values
     setWholeCurrPlay(getWholeOldPlay())
     setWholeCurrBind(getWholeOldBind())
-
+    
     #add marker row to show prior row was reverted
     nRow <- c("^^", "^^", "^^", "^^", "^^", "^^", "^^", "^^", "Reverted")
     choices <<- rbind(choices, nRow)
-
+    
     #Output the values
     updateVals()
-
+    
     #Output adist values
     subMoveCount()
     moveOut()
     adistOut()
   })
-
+  
   #Auto Solve functionality #####TO DO DOES NOT WORK AS EXPECTED#####
   observeEvent(input$autoSolve, {
     while(checkGoal() == FALSE){
-
+      
       flushHTML()
       tempADIST = calcAdist(1)
-
+      
       #save current player status
       setWholeOldPlay(getWholeCurrPlay())
       setWholeOldBind(getWholeCurrBind())
-
+      
       if(calcAdist(1) >= 5){
         #If col is not locked, replace and re-do binding site eval
         for(x in 1:8){
@@ -370,36 +384,36 @@ server <- function(input, output) {
             setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(x)), bindTab), x)
           }
         }
-
+        
         cleanUp("Extinction")
-
+        
       }else{
         #Pick random number of cols, then choose acceptable start col for contiguous column selection
         colAmount <- round(runif(1,1,8))
         startCol <- round(runif(1,1,9-colAmount))
         endCol <- startCol + colAmount - 1
         markCol <- startCol
-
+        
         for(x in startCol:endCol){
           setCurrPlay(paste("<span style=\"color:red\">", createColumn(), "</span>", sep= "", collapse = ""), x)
           setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(x)), bindTab), x)
         }
-
+        
         cleanUp("Recombination")
       }
-
+      
       if(tempADIST < calcAdist(1)){
         #Reset values
         setWholeCurrPlay(getWholeOldPlay())
         setWholeCurrBind(getWholeOldBind())
-
+        
         #add marker row to show prior row was reverted
         nRow <- c("^^", "^^", "^^", "^^", "^^", "^^", "^^", "^^", "Reverted")
         choices <<- rbind(choices, nRow)
-
+        
         #Output the values
         updateVals()
-
+        
         #Output adist values
         subMoveCount()
         moveOut()
@@ -408,13 +422,13 @@ server <- function(input, output) {
       print(getWholeCurrBind())
     }
   })
-
+  
   #Play again button on win modal
   observeEvent(input$playAgain, {
     removeModal()
     startModal()
   })
-
+  
   #Quit button on win modal
   observeEvent(input$quit, {
     stopApp(returnValue = invisible())
