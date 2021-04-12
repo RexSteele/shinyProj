@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyBS)
 library(tidyverse)
 source("shinyDrop.R")
 
@@ -15,6 +16,7 @@ colnames(choices) <- c("p1","p2","p3","p4","p5","p6","p7","p8", "mt", "adist1", 
 
 #USER INTERFACE
 ui <- fluidPage(
+  shinyBS:::shinyBSDep,
 
   # App title ----
   titlePanel("Bio - Cryptex"),
@@ -70,7 +72,10 @@ ui <- fluidPage(
                    label = "Auto-Solve"),
 
       #moveCount output
-      htmlOutput("moveCount")
+      htmlOutput("moveCount"),
+      
+      #author tag
+      htmlOutput("author", style="color:#888; font-size: 12px;")
 
     ),
 
@@ -141,10 +146,26 @@ startModal <- function(){
 }
 
 ##SERVER
-server <- function(input, output) {
+server <- function(input, output, session) {
 
   source("calcVals.R", local=TRUE)
   source("gameVals.R", local=TRUE)
+  
+  output$author <- renderPrint({HTML("Developed by Rex Steele and Alvaro L Perez-Quintero (Colorado State University, Agricultural Biology)")})
+  addTooltip(session, id = 'shuffleAll', title = "Shuffles all columns",
+             placement = "bottom", trigger = "hover", options = list(delay = list(show=1000)))
+  addTooltip(session, id = 'mutation', title = "Shuffles single value in one column",
+             placement = "bottom", trigger = "hover", options = list(delay = list(show=1000)))
+  addTooltip(session, id = 'recomb', title = "Shuffles random set of contiguous columns",
+             placement = "bottom", trigger = "hover", options = list(delay = list(show=1000)))
+  addTooltip(session, id = 'shuffleOneInput', title = "Select column to mutate",
+             placement = "bottom", trigger = "hover", options = list(delay = list(show=1000)))
+  addTooltip(session, id = 'shuffleOneButton', title = "Shuffles column chosen by dropdown list",
+             placement = "bottom", trigger = "hover", options = list(delay = list(show=1000)))
+  addTooltip(session, id = 'revert', title = "Reverts once to prior column set",
+             placement = "bottom", trigger = "hover", options = list(delay = list(show=1000)))
+  addTooltip(session, id = 'autoSolve', title = "Automatically solves current puzzle for Secret Key 1",
+             placement = "bottom", trigger = "hover", options = list(delay = list(show=1000)))
 
   #update dataframe
   updateData <- function(){
