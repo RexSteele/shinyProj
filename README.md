@@ -5,17 +5,22 @@ Continue to change the bindings until you unlock the hidden message!
 
 ## Description
 
-The goal of the game is to change the binding sites (currently the top most line of characters) to match the secret message (currently 'GATTACCA'). You change the
-b
+The goal of the game is to change the binding sites, the top most line of characters, to match the secret key(s). The initial key is set to "GATTACCA". Additional keys, up to 5 in total, can be selected at start of game. Additional keys will be randomly generated.
+
+Changes to the player values will be denoted with red text. The score values listed below the Cryptex are the 'adist()' of values from the secret key.
+
+Once the game has reached the end state a modal will load, giving the option to quit or start a new game. The game values up to this point will be uploaded to a dropbox account afterwards, allowing statistical analysis of all runs to date.
 
 ## Getting Started
 
 ### Dependencies
   R Libraries:
     shiny
+    tidyverse
+    rdrop2
 
 ### Installing
-  No installation of the game itself is needed. Install R Studio on your computer, then run the primary script (BioCryptex.R) inside of R Studio.
+  No installation of the game itself is needed. Install R Studio on your computer, install the requisite library modules, then run the primary script (BioCryptex.R) inside of R Studio.
 
 ### Executing program
 
@@ -24,18 +29,23 @@ b
   - Click inside the text area where the program code is displayed
   - Press Ctrl + Shift + Enter
 
+
+### Uploading to Shiny Server
+
+To upload to a shinyapps.io server, please see the following documentation: [Shiny Apps](https://shiny.rstudio.com/articles/shinyapps.html)
 ### Buttons
 
-  - Shuffle All : Shuffle all player values (This is also the method to start the game currently)
-  - Mutate : Shuffles one random letter in a single column of the player values
-  - Recombination : Shuffles a random number of contiguous columns
-  - Shuffle One Selection : Option to select a specific player column, and shuffle just that column (Planned to be removed at a later date)
-  - Lock Column Selection : Option to lock a specific column(s). Currently only applies to the Shuffle All action
-  - Revert : Revert player values to prior set
+  - Extinction : Shuffle all columns to random values
+  - Mutate : Shuffles a single value in a single column to a random value
+  - Recombination : Shuffle a random set of contiguous columns to random values
+  - Specific Mutation : Select column choice from drop-down, then click button to shuffle specific column to random value
+  - Revert : Reverts player values to last set. Only preserves immediate last move, unalbe to revert mutliple times
+  - Auto-Solve : Auto-solves current values utilizing random choices based on current 'adist()' from target values
 
 ## Authors
 
 Rex Steele
+Alvaro Pérez
 
 ## Acknowledgments
 
