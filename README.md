@@ -21,6 +21,10 @@ Once the game has reached the end state a modal will load, giving the option to 
 
 ### Installing
   No installation of the game itself is needed. Install R Studio on your computer, install the requisite library modules, then run the primary script (BioCryptex.R) inside of R Studio.
+  
+ * A Note on Dropbox
+    
+    The rdrop2 library requires a token to enable uploads to the DropBox account. Set up an account, and place that token in the main directory of this project. For information this see : [rdrop2 documentation](https://cran.r-project.org/web/packages/rdrop2/rdrop2.pdf)
 
 ### Executing program
 
