@@ -24,7 +24,7 @@ Once the game has reached the end state a modal will load, giving the option to 
   
  * A Note on Dropbox
     
-    The rdrop2 library requires a token to enable uploads to the DropBox account. Set up an account, and place that token in the main directory of this project. For information this see : [rdrop2 documentation](https://cran.r-project.org/web/packages/rdrop2/rdrop2.pdf)
+    The rdrop2 library requires a token to enable uploads to the DropBox account. Set up an account, and place that token, titled 'droptoken.rds' in the main directory of this project. For information this see : [rdrop2 documentation](https://cran.r-project.org/web/packages/rdrop2/rdrop2.pdf)
 
 ### Executing program
 
