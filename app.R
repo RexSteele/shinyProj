@@ -1,4 +1,4 @@
-library(shiny)
+    library(shiny)
 library(shinyBS)
 library(tidyverse)
 source("shinyDrop.R")
@@ -73,7 +73,7 @@ ui <- fluidPage(
 
       #moveCount output
       htmlOutput("moveCount"),
-      
+
       #author tag
       htmlOutput("author", style="color:#888; font-size: 12px;")
 
@@ -145,12 +145,27 @@ startModal <- function(){
   ))
 }
 
+#Modal for autosolve button, provides options for multiple auto solve techniques
+autoSolveModal <- function(){
+  showModal(modalDialog(
+    title = "Auto-Solve",
+    actionButton(inputId = "as1",
+                 label = "Extinction >= 5, Recombination < 5"),
+    actionButton(inputId = "as2",
+                 label = "Extinction > 5, Mutation <= 5"),
+    actionButton(inputId = "as3",
+                 label = "Extinction > 5, Recombination > 2, Mutation <= 2"),
+    easyClose = TRUE,
+    footer = NULL
+  ))
+}
+
 ##SERVER
 server <- function(input, output, session) {
 
   source("calcVals.R", local=TRUE)
   source("gameVals.R", local=TRUE)
-  
+
   output$author <- renderPrint({HTML("Developed by Rex Steele and Alvaro L Perez-Quintero (Colorado State University, Agricultural Biology)")})
   addTooltip(session, id = 'shuffleAll', title = "Shuffles all columns",
              placement = "bottom", trigger = "hover", options = list(delay = list(show=1000)))
@@ -372,8 +387,15 @@ server <- function(input, output, session) {
     adistOut()
   })
 
-  #Auto Solve functionality #####TO DO DOES NOT WORK AS EXPECTED#####
   observeEvent(input$autoSolve, {
+    autoSolveModal()
+  })
+
+  #Auto Solve functionality: Utilizes same functionality as standard gameplay buttons do above. Unable to call directly,
+      # thus the reuse of the code. Should be refactored to functionalize gameplay features (Extinction, Recomb, etc),
+      # then call those functions as needed for both the buttons above and the auto solve functionality below
+  ##AS1
+  observeEvent(input$as1, {
     while(checkGoal() == FALSE){
 
       flushHTML()
@@ -384,7 +406,7 @@ server <- function(input, output, session) {
       setWholeOldBind(getWholeCurrBind())
 
       if(calcAdist(1) >= 5){
-        #If col is not locked, replace and re-do binding site eval
+        #Extinction code
         for(x in 1:8){
           if(!(paste("lockCol", toString(x), sep="") %in% input$lockCheck)){
             setCurrPlay(paste("<span style=\"color:red\">", createColumn(), "</span>"), x)
@@ -395,7 +417,7 @@ server <- function(input, output, session) {
         cleanUp("Extinction")
 
       }else{
-        #Pick random number of cols, then choose acceptable start col for contiguous column selection
+        #Recombination code
         colAmount <- round(runif(1,1,8))
         startCol <- round(runif(1,1,9-colAmount))
         endCol <- startCol + colAmount - 1
@@ -426,8 +448,122 @@ server <- function(input, output, session) {
         moveOut()
         adistOut()
       }
-      print(getWholeCurrBind())
     }
+})
+
+    ##AS2
+    observeEvent(input$as2, {
+      while(checkGoal() == FALSE){
+
+        flushHTML()
+        tempADIST = calcAdist(1)
+
+        #save current player status
+        setWholeOldPlay(getWholeCurrPlay())
+        setWholeOldBind(getWholeCurrBind())
+
+        if(calcAdist(1) > 5){
+          #If col is not locked, replace and re-do binding site eval
+          for(x in 1:8){
+            if(!(paste("lockCol", toString(x), sep="") %in% input$lockCheck)){
+              setCurrPlay(paste("<span style=\"color:red\">", createColumn(), "</span>"), x)
+              setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(x)), bindTab), x)
+            }
+          }
+
+          cleanUp("Extinction")
+
+        }else{
+          #Mutate code
+          randomCol <- round(runif(1,1,8))
+          setCurrPlay(oneRandomShuffle(getCurrPlay(randomCol)), randomCol)
+          setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(randomCol)), bindTab), randomCol)
+
+          cleanUp("Mutation")
+        }
+
+        if(tempADIST < calcAdist(1)){
+          #Reset values
+          setWholeCurrPlay(getWholeOldPlay())
+          setWholeCurrBind(getWholeOldBind())
+
+          #add marker row to show prior row was reverted
+          nRow <- c("^^", "^^", "^^", "^^", "^^", "^^", "^^", "^^", "Reverted")
+          choices <<- rbind(choices, nRow)
+
+          #Output the values
+          updateVals()
+
+          #Output adist values
+          subMoveCount()
+          moveOut()
+          adistOut()
+        }
+      }
+})
+
+      ##AS3
+      observeEvent(input$as3, {
+        while(checkGoal() == FALSE){
+
+          flushHTML()
+          tempADIST = calcAdist(1)
+
+          #save current player status
+          setWholeOldPlay(getWholeCurrPlay())
+          setWholeOldBind(getWholeCurrBind())
+
+          if(calcAdist(1) > 5){
+            #Extinction code
+            for(x in 1:8){
+              if(!(paste("lockCol", toString(x), sep="") %in% input$lockCheck)){
+                setCurrPlay(paste("<span style=\"color:red\">", createColumn(), "</span>"), x)
+                setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(x)), bindTab), x)
+              }
+            }
+
+            cleanUp("Extinction")
+
+          }else if(calcAdist(1) > 2){
+            #Recomb code
+            colAmount <- round(runif(1,1,8))
+            startCol <- round(runif(1,1,9-colAmount))
+            endCol <- startCol + colAmount - 1
+            markCol <- startCol
+
+            for(x in startCol:endCol){
+              setCurrPlay(paste("<span style=\"color:red\">", createColumn(), "</span>", sep= "", collapse = ""), x)
+              setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(x)), bindTab), x)
+            }
+            cleanUp("Recombination")
+
+          }else{
+            #Mutate code
+            randomCol <- round(runif(1,1,8))
+            setCurrPlay(oneRandomShuffle(getCurrPlay(randomCol)), randomCol)
+            setCurrBind(calcBindingSite(gsub("[^A-Z]", "", getCurrPlay(randomCol)), bindTab), randomCol)
+
+            cleanUp("Mutation")
+          }
+
+          if(tempADIST < calcAdist(1)){
+            #Reset values
+            setWholeCurrPlay(getWholeOldPlay())
+            setWholeCurrBind(getWholeOldBind())
+
+            #add marker row to show prior row was reverted
+            nRow <- c("^^", "^^", "^^", "^^", "^^", "^^", "^^", "^^", "Reverted")
+            choices <<- rbind(choices, nRow)
+
+            #Output the values
+            updateVals()
+
+            #Output adist values
+            subMoveCount()
+            moveOut()
+            adistOut()
+          }
+        }
   })
 
   #Play again button on win modal
